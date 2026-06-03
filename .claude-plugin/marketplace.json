@@ -1,0 +1,25 @@
+{
+  "name": "scarlet-crew-marketplace",
+  "owner": {
+    "name": "bencardinal",
+    "url": "https://github.com/bencardinal"
+  },
+  "metadata": {
+    "description": "Single-plugin marketplace serving the Scarlet Crew — a reusable crew of specialized subagents for any project.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "scarlet-crew",
+      "source": "./",
+      "description": "A reusable crew of specialized subagents (orchestrator, builder, QA, skeptic, newbie, navigator) built around productive tension, plus a /assemble-crew bootstrap command.",
+      "version": "0.1.0",
+      "author": {
+        "name": "bencardinal",
+        "url": "https://github.com/bencardinal"
+      },
+      "homepage": "https://github.com/bencardinal/scarlet-crew",
+      "keywords": ["agents", "agent-teams", "subagents", "orchestration", "crew"]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "displayName": "The Scarlet Crew",
+  "name": "scarlet-crew",
+  "version": "0.1.0",
+  "description": "A reusable crew of specialized subagents — orchestrator, builder, QA, skeptic, newbie, and navigator — designed around productive tension (momentum vs. skepticism, novelty vs. simplicity), plus a bootstrap command to tailor the crew to any project.",
+  "author": {
+    "name": "Ben Cardinal",
+    "email": "ben.cardinal@gmail.com",
+    "url": "https://github.com/bencardinal"
+  },
+  "homepage": "https://github.com/bencardinal/scarlet-crew",
+  "repository": "https://github.com/bencardinal/scarlet-crew",
+  "license": "MIT",
+  "keywords": [
+    "agents",
+    "agent-teams",
+    "subagents",
+    "orchestration",
+    "code-review",
+    "crew"
+  ]
+}
