@@ -39,6 +39,8 @@ Agent definitions (especially `cork.md`) explicitly address both modes; keep tha
 
 Crew-wide MCP servers live in `.mcp.json` at the plugin root, **not** in agent frontmatter — a subagent's `mcpServers`/`skills` frontmatter is ignored when it runs as an Agent Teams teammate. Don't move MCP config into the agent files.
 
+**Exception — servers needing secrets:** `${ENV_VAR}` expansion is broken in plugin-root `.mcp.json` (anthropics/claude-code#9427 — placeholders are sent literally), so the GitHub server is documented as a user-scope `claude mcp add` in the README instead. Don't put env-var-dependent config back into `.mcp.json` until that bug is fixed.
+
 ### `/assemble-crew`
 
 `commands/assemble-crew.md` bootstraps the crew in a *host* project: it infers scope from that repo, asks at most 2–3 clarifying questions, and writes a Scarlet Crew section into the host's `CLAUDE.md` (merge, never clobber).

@@ -81,23 +81,19 @@ Cork runs as the main thread and spawns the others as **one-shot subagents** (Co
 
 ## MCP servers
 
-Crew-wide MCP servers are configured in [`.mcp.json`](.mcp.json) at the plugin root. **GitHub's official remote MCP server** is configured out of the box:
+The crew expects **GitHub's official remote MCP server**. Add it once at **user scope** so it's available to the crew in every project:
 
-```json
-{
-  "mcpServers": {
-    "github": {
-      "type": "http",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "headers": {
-        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
-      }
-    }
-  }
-}
+```bash
+claude mcp add --scope user --transport http github https://api.githubcopilot.com/mcp/ \
+  --header 'Authorization: Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}'
 ```
 
-Export `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell profile before launching — a classic PAT (`ghp_…`, minimum `repo` scope) works best; a `gh auth token` OAuth token also works. (Plain `/mcp` OAuth sign-in is **not** an option here: GitHub's remote MCP server doesn't support dynamic client registration — [github/github-mcp-server#1404](https://github.com/github/github-mcp-server/issues/1404).)
+Export `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell profile — a classic PAT (`ghp_…`, minimum `repo` scope) works best; a `gh auth token` OAuth token also works. Two constraints force this shape:
+
+- **Plain `/mcp` OAuth sign-in doesn't work** — GitHub's remote MCP server lacks dynamic client registration ([github/github-mcp-server#1404](https://github.com/github/github-mcp-server/issues/1404)), so it must be a PAT header.
+- **The plugin can't ship the server itself** — `${ENV_VAR}` expansion is broken in plugin-root `.mcp.json` ([anthropics/claude-code#9427](https://github.com/anthropics/claude-code/issues/9427)); the placeholder is sent to GitHub literally and auth fails with HTTP 400. User- and project-scope configs expand it correctly.
+
+The plugin's [`.mcp.json`](.mcp.json) is kept (empty) as the extension point for crew-wide servers that **don't** need secrets — once #9427 is fixed, the GitHub server can move back in.
 
 **Adding more servers** (Home Assistant, etc.) — add another entry under `mcpServers`. For example, a generic HTTP/SSE server:
 
