@@ -81,21 +81,23 @@ Cork runs as the main thread and spawns the others as **one-shot subagents** (Co
 
 ## MCP servers
 
-Crew-wide MCP servers are configured in [`.mcp.json`](.mcp.json) at the plugin root. A **GitHub** server is scaffolded as an example:
+Crew-wide MCP servers are configured in [`.mcp.json`](.mcp.json) at the plugin root. **GitHub's official remote MCP server** is configured out of the box:
 
 ```json
 {
   "mcpServers": {
     "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}" }
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
     }
   }
 }
 ```
 
-Set `GITHUB_PERSONAL_ACCESS_TOKEN` in your environment before launching.
+Export `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell profile before launching — a classic PAT (`ghp_…`, minimum `repo` scope) works best; a `gh auth token` OAuth token also works. (Plain `/mcp` OAuth sign-in is **not** an option here: GitHub's remote MCP server doesn't support dynamic client registration — [github/github-mcp-server#1404](https://github.com/github/github-mcp-server/issues/1404).)
 
 **Adding more servers** (Home Assistant, etc.) — add another entry under `mcpServers`. For example, a generic HTTP/SSE server:
 
