@@ -24,7 +24,9 @@ The repo is **both the plugin and its own single-plugin marketplace**: `.claude-
 
 The six agents in `agents/` are designed around **productive tension** — momentum (Chips) vs. skepticism (Barnacle), novelty (Knot) vs. simplicity — with Cork as the convergence engine. The operating loop is: parallel input → Cork synthesis → converge, with dissent recorded. Each agent's frontmatter encodes its role deliberately:
 
-- **Tool allowlists are role constraints.** Barnacle and Marco are read-only (`Read, Grep, Glob`); Brass adds `Bash` to run tests but not edit; Knot adds web tools; Chips alone has full tools; Cork has `Agent(chips, brass, barnacle, marco, knot)` to spawn the rest. Don't widen an agent's tools without considering the tension it breaks.
+The payoff — that this structured tension yields better decisions than a single agent — is an **unproven hypothesis**, and the crew costs real tokens and coordination overhead. It's worth that cost on genuinely fuzzy or high-stakes problems; for single edits or quick lookups, use one agent directly. The running evidence is this repo's own git history.
+
+- **No tool allowlists — role is enforced by the prompt.** No agent carries a `tools:` key, so every crew member inherits the full toolset, MCP servers included (allowlists silently blocked MCP tools, which is why they were dropped in 0.2.0). The constraint that keeps Barnacle skeptical and Cork coordination-first now lives entirely in each agent's prompt — `agents/cork.md`'s *Judgment* section is the reference for when Cork acts directly vs. delegates. If you reintroduce a `tools:` key, know that you're re-breaking MCP access for that agent.
 - **Models are cost/depth choices.** Cork and Barnacle run `opus` (synthesis/deep critique), Brass `sonnet`, Marco and Knot `haiku` (cheap by design), Chips `inherit`.
 - **`memory: project`** on Barnacle, Marco, and Knot lets them accumulate per-project insight in the host project's `.claude/agent-memory/<name>/`.
 
@@ -39,7 +41,7 @@ Agent definitions (especially `cork.md`) explicitly address both modes; keep tha
 
 Crew-wide MCP servers live in `.mcp.json` at the plugin root, **not** in agent frontmatter — a subagent's `mcpServers`/`skills` frontmatter is ignored when it runs as an Agent Teams teammate. Don't move MCP config into the agent files.
 
-**Exception — servers needing secrets:** `${ENV_VAR}` expansion is broken in plugin-root `.mcp.json` (anthropics/claude-code#9427 — placeholders are sent literally), so the GitHub server is documented as a user-scope `claude mcp add` in the README instead. Don't put env-var-dependent config back into `.mcp.json` until that bug is fixed.
+**Exception — servers needing secrets:** `${ENV_VAR}` expansion is broken in plugin-root `.mcp.json` (anthropics/claude-code#9427 — placeholders are sent literally), so any env-var-dependent server (e.g. the optional GitHub MCP server) must be added at user scope instead. See the README's "MCP servers (optional)" section for the full rationale and the `claude mcp add` command — don't duplicate it here. Don't put env-var-dependent config back into `.mcp.json` until that bug is fixed.
 
 ### `/assemble-crew`
 
