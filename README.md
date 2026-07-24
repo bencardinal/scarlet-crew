@@ -6,16 +6,20 @@ The crew is designed around **productive tension** — momentum vs. skepticism, 
 
 | Agent | Role | Model | Access | The tension |
 |-------|------|-------|--------|-------------|
-| **Cork** | Quartermaster / orchestrator | `opus` | read + spawn crew | Drives convergence; coordination-first |
-| **Chips** | Developer / builder | `inherit` | full tools | **Momentum** — ships working code |
-| **Brass** | QA | `sonnet` | read + run (Bash) | Verifies what actually works |
-| **Barnacle** | Skeptic / devil's advocate | `opus` | read-only | **Skepticism** — "do we even need this?" |
-| **Marco** | Newbie parrot | `haiku` | read-only | Surfaces unstated assumptions |
-| **Knot** | Navigator / research | `haiku` | read + web/fetch | **Novelty** — brings options to the table |
+| **Cork** | Quartermaster / orchestrator | `opus` | all tools | Drives convergence; coordination-first |
+| **Chips** | Developer / builder | `inherit` | all tools | **Momentum** — ships working code |
+| **Brass** | QA | `sonnet` | all tools | Verifies what actually works |
+| **Barnacle** | Skeptic / devil's advocate | `opus` | all tools | **Skepticism** — "do we even need this?" |
+| **Marco** | Newbie parrot | `haiku` | all tools | Surfaces unstated assumptions |
+| **Knot** | Navigator / research | `haiku` | all tools | **Novelty** — brings options to the table |
+
+No agent carries a `tools:` allowlist — every crew member inherits the full toolset (including any MCP servers you have configured). Role is enforced by the prompt, not by the tool list: Barnacle still argues rather than builds, and Cork still delegates rather than codes.
 
 The loop: **parallel input → Cork synthesis → converge.** Cork decomposes a problem, fans work out to the crew in parallel rounds, distills the disagreements, and re-queues a tighter iteration until the crew lands a decision — with the dissent (especially Barnacle's) on the record.
 
-> **Display name:** the plugin **id** is `scarlet-crew` (keep it stable). The human-facing name lives in one place — `displayName` at the top of [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json). Change it there (candidates: *The Scarlet Interruptor / Hallucinator / Orchestrator*) without touching anything else.
+**Is it worth it?** The premise — that structured tension produces better decisions than a single agent — is a hypothesis, not a proven result. It costs real tokens and coordination overhead, so reach for the crew on genuinely fuzzy or high-stakes problems where being wrong is expensive; for a single edit or a quick lookup, just use one agent directly. The honest evidence for whether it pays off is this repo's own git history — the running record of what the crew decided and how those calls held up.
+
+> **Display name:** the plugin **id** is `scarlet-crew` (keep it stable). The human-facing name lives in one place — `displayName` at the top of [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json). Change it there without touching anything else.
 
 ---
 
@@ -32,7 +36,7 @@ This repo is **both a plugin and its own single-plugin marketplace**, so you can
 /plugin install scarlet-crew@scarlet-crew-marketplace
 ```
 
-CLI equivalents:
+The same commands from your shell — `/plugin …` (the in-session slash command) and `claude plugin …` (the shell command) are two interfaces to the **same operation**, not different tools:
 
 ```bash
 claude plugin marketplace add /path/to/scarlet-crew
@@ -40,7 +44,7 @@ claude plugin install scarlet-crew@scarlet-crew-marketplace
 claude plugin validate /path/to/scarlet-crew      # sanity-check the manifest & components
 ```
 
-Once installed, run `/assemble-crew` in any project to tailor the crew (writes shared context into that project's `CLAUDE.md`). Pass an optional brief: `/assemble-crew building a CLI for parsing flight logs`.
+Once installed, the crew is ready to run. Optionally, run `/assemble-crew` in a project to tailor the crew to it (writes shared context into that project's `CLAUDE.md`) — recommended, but not required; the crew works without it. Pass an optional brief: `/assemble-crew building a CLI for parsing flight logs`.
 
 ---
 
@@ -60,9 +64,9 @@ export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 
 Then make Cork the lead and have it spawn the others **as teammates from these agent definitions**:
 
-> *"Act as Cork, the Scarlet Crew lead. Assemble the crew as a team — spawn Chips, Brass, Barnacle, Marco, and Knot as teammates from their agent definitions — and orchestrate work on: «your task here». Run parallel rounds and converge, with Barnacle's dissent recorded."*
+> *"Act as Cork, the Scarlet Crew lead. Assemble the crew as a team — spawn the agent types `scarlet-crew:chips`, `scarlet-crew:brass`, `scarlet-crew:barnacle`, `scarlet-crew:marco`, and `scarlet-crew:knot` as teammates — and orchestrate work on: «your task here». Run parallel rounds and converge, with Barnacle's dissent recorded."*
 
-When you reference a crew member by name, the teammate honors that definition's `tools` allowlist and `model` and appends its prompt as instructions.
+Reference each crew member by its **namespaced agent type** (`scarlet-crew:<name>`) — the bare names won't resolve once the crew is installed as a plugin. The teammate honors that definition's `model` and appends its prompt as instructions.
 
 ### 2. Fallback — hub-and-spoke, no experimental flag
 
@@ -70,7 +74,7 @@ When you reference a crew member by name, the teammate honors that definition's 
 claude --agent cork
 ```
 
-Cork runs as the main thread and spawns the others as **one-shot subagents** (Cork's `tools` includes `Agent(chips, brass, barnacle, marco, knot)`). This is hub-and-spoke: **no agent-to-agent chatter and no nesting** — every perspective routes through Cork, so Cork synthesizes harder.
+Cork runs as the main thread and spawns the others as **one-shot subagents** by their namespaced agent types — see [`agents/cork.md`](agents/cork.md) for the exact types. This is hub-and-spoke: **no agent-to-agent chatter and no nesting** — every perspective routes through Cork, so Cork synthesizes harder.
 
 ### Tradeoffs
 
@@ -79,39 +83,18 @@ Cork runs as the main thread and spawns the others as **one-shot subagents** (Co
 
 ---
 
-## MCP servers
+## MCP servers (optional)
 
-The crew expects **GitHub's official remote MCP server**. Add it once at **user scope** so it's available to the crew in every project:
+The crew runs fine with no MCP servers. **Optionally**, give it GitHub's official remote MCP server — useful for PR/issue work. Add it once at **user scope** (not via the plugin) so it's available in every project:
 
 ```bash
 claude mcp add --scope user --transport http github https://api.githubcopilot.com/mcp/ \
   --header 'Authorization: Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}'
 ```
 
-Export `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell profile — a classic PAT (`ghp_…`, minimum `repo` scope) works best; a `gh auth token` OAuth token also works. Two constraints force this shape:
+Export `GITHUB_PERSONAL_ACCESS_TOKEN` in your shell profile (a classic PAT with `repo` scope, or `gh auth token`). It has to be a user-scope PAT header for two reasons: GitHub's server lacks dynamic client registration so plain `/mcp` OAuth doesn't work ([github/github-mcp-server#1404](https://github.com/github/github-mcp-server/issues/1404)), and `${ENV_VAR}` expansion is broken in plugin-root `.mcp.json` so the plugin can't ship it ([anthropics/claude-code#9427](https://github.com/anthropics/claude-code/issues/9427)).
 
-- **Plain `/mcp` OAuth sign-in doesn't work** — GitHub's remote MCP server lacks dynamic client registration ([github/github-mcp-server#1404](https://github.com/github/github-mcp-server/issues/1404)), so it must be a PAT header.
-- **The plugin can't ship the server itself** — `${ENV_VAR}` expansion is broken in plugin-root `.mcp.json` ([anthropics/claude-code#9427](https://github.com/anthropics/claude-code/issues/9427)); the placeholder is sent to GitHub literally and auth fails with HTTP 400. User- and project-scope configs expand it correctly.
-
-The plugin's [`.mcp.json`](.mcp.json) is kept (empty) as the extension point for crew-wide servers that **don't** need secrets — once #9427 is fixed, the GitHub server can move back in.
-
-**Adding more servers** (Home Assistant, etc.) — add another entry under `mcpServers`. For example, a generic HTTP/SSE server:
-
-```jsonc
-{
-  "mcpServers": {
-    "home-assistant": {
-      "type": "sse",
-      "url": "http://homeassistant.local:8123/mcp_server/sse",
-      "headers": { "Authorization": "Bearer ${HASS_TOKEN}" }
-    }
-  }
-}
-```
-
-> ### ⚠️ Important: why MCP lives in `.mcp.json`, not the agent files
->
-> A subagent's `skills` and `mcpServers` **frontmatter is not applied when that subagent runs as an Agent Teams teammate**. Teammates load skills and MCP servers from your **project and user settings**, the same as a regular session. That's exactly why crew-wide MCP belongs in `.mcp.json` (which the plugin contributes to project config) rather than being declared per-agent — so it's available to the crew **whether they run as subagents or as teammates**.
+The plugin's [`.mcp.json`](.mcp.json) is an (empty) extension point for crew-wide servers that **don't** need secrets; add secret-free servers there under `mcpServers`. Don't put MCP config in agent frontmatter — a subagent's `mcpServers`/`skills` frontmatter is ignored when it runs as an Agent Teams teammate (teammates load MCP from project/user settings), so `.mcp.json` is what reaches the crew in both run modes.
 
 ---
 
@@ -124,14 +107,15 @@ scarlet-crew/
 │   └── marketplace.json     # single-plugin marketplace (source: ".")
 ├── agents/
 │   ├── cork.md              # orchestrator / Agent Teams lead (opus)
-│   ├── chips.md             # builder (inherit, full tools)
-│   ├── brass.md             # QA (sonnet, read + Bash)
-│   ├── barnacle.md          # skeptic (opus, read-only, memory: project)
-│   ├── marco.md             # newbie (haiku, read-only, memory: project)
-│   └── knot.md              # navigator / research (haiku, read + web, memory: project)
+│   ├── chips.md             # builder (inherit)
+│   ├── brass.md             # QA (sonnet)
+│   ├── barnacle.md          # skeptic (opus, memory: project)
+│   ├── marco.md             # newbie (haiku, memory: project)
+│   └── knot.md              # navigator / research (haiku, memory: project)
 ├── commands/
 │   └── assemble-crew.md     # /assemble-crew bootstrap command
-├── .mcp.json                # crew-wide MCP servers (GitHub example)
+├── .mcp.json                # empty extension point for secret-free crew-wide MCP servers
+├── CLAUDE.md                # guidance for Claude Code working in this repo
 └── README.md
 ```
 
